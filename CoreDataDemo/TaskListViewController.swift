@@ -73,11 +73,17 @@ class TaskListViewController: UITableViewController {
         }
     }
     
-    private func showAlert(with title: String, and message: String) {
+    private func showAlert(with title: String, and message: String, indexPath: IndexPath? = nil) {
+        
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         let saveAction = UIAlertAction(title: "Save", style: .default) { _ in
             guard let task = alert.textFields?.first?.text, !task.isEmpty else { return }
+            if let indexPath = indexPath {
+                self.refresh(indexPath, taskName: task)
+                
+            } else {
             self.save(task)
+            }
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
@@ -103,6 +109,34 @@ class TaskListViewController: UITableViewController {
         tableView.insertRows(at: [cellIndex], with: .automatic)
         
     }
+    
+    private func delete(_ indexPath: IndexPath) {
+        dataManager.delete(indexPath.row, taskList: taskList) { result in
+            switch result {
+            case .success(let taskList):
+                self.taskList = taskList
+            case .failure(let error):
+                print(error)
+            }
+        }
+       self.tableView.reloadData()
+    }
+    
+    private func refresh(_ indexPath: IndexPath, taskName: String) {
+        dataManager.refresh(indexPath.row, taskList: taskList, taskName: taskName) { result in
+            switch result {
+            case .success(let taskList):
+                self.taskList = taskList
+            case .failure(let error):
+                print(error)
+            }
+        }
+       self.tableView.reloadData()
+    }
+    
+    private func changeTask(indexPath: IndexPath) {
+        showAlert(with: "dsada", and: "sdfsd", indexPath: indexPath)
+    }
 }
 
 extension TaskListViewController {
@@ -119,4 +153,17 @@ extension TaskListViewController {
         cell.contentConfiguration = content
         return cell
     }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        changeTask(indexPath: indexPath)
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete
+        {
+            delete(indexPath)
+        }
+    }
+    
 }
